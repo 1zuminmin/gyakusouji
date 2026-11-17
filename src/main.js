@@ -4,17 +4,19 @@ import { Game, Flick } from './engine.js';
 import { World } from './world.js';
 import { Audio } from './audio.js';
 const $=id=>document.getElementById(id);
+// Keep magnitudes positive internally for difficulty and existing saved records.
+const tokyoDistance=value=>`${value > 0 ? '−' : ''}${Math.floor(value).toLocaleString('ja-JP')}`;
 const game=new Game(),flick=new Flick(),audio=new Audio();
 let world,best=0,pausedAt=null,crashShown=false,feedbackUntil=0;
 try{best=Number(localStorage.getItem(CONFIG.bestStorageKey))||0;}catch{}
-$('intro-best').textContent=best.toLocaleString('ja-JP');
+$('intro-best').textContent=tokyoDistance(best);
 try{world=new World($('scene'));}catch(e){$('error').hidden=false;console.error(e);}
 function start(){
   audio.start().catch(()=>{$('sound').textContent='音 OFF';});
   game.start(performance.now());crashShown=false;pausedAt=null;flick.clear();
   $('intro').hidden=true;$('result').hidden=true;$('paused').hidden=true;$('hud').hidden=false;$('pause').hidden=false;$('footer').hidden=true;$('touch-hint').hidden=false;
   $('danger').className='';$('danger').style.opacity=0;document.body.classList.add('playing');$('feedback').className='';$('grade-frame').className='';
-  $('best-hud').textContent=`BEST ${best.toLocaleString('ja-JP')} m`;
+  $('best-hud').textContent=`BEST ${tokyoDistance(best)} m`;
 }
 $('start').onclick=start;$('retry').onclick=start;
 $('sound').onclick=()=>{const enabled=audio.toggle();$('sound').textContent=`音 ${enabled?'ON':'OFF'}`;$('sound').setAttribute('aria-pressed',String(enabled));if(enabled)audio.start().catch(()=>{});};
@@ -27,7 +29,7 @@ function dodge(direction){
   const grade=game.dodge(direction,performance.now());if(!grade)return;
   const now=performance.now();feedbackUntil=now+850;
   $('touch-hint').hidden=true;$('danger').style.opacity=0;$('warning').hidden=true;
-  const f=$('feedback');f.querySelector('strong').textContent=grade.name;f.querySelector('span').textContent=`+${grade.bonus} m`;f.style.color=grade.color;
+  const f=$('feedback');f.querySelector('strong').textContent=grade.name;f.querySelector('span').textContent=`${tokyoDistance(grade.bonus)} m`;f.style.color=grade.color;
   f.className='';void f.offsetWidth;f.className='show';
   const frame=$('grade-frame');frame.className='';void frame.offsetWidth;frame.style.setProperty('--grade',grade.color);frame.className=`flash${grade.name==='PERFECT'?' rainbow':''}`;
   audio.success(3-CONFIG.grades.indexOf(grade));
@@ -41,7 +43,7 @@ app.addEventListener('pointerup',e=>flick.clear(e.pointerId));app.addEventListen
 window.addEventListener('keydown',e=>{if(e.code==='Escape'){if(pausedAt!==null)resume();else pause();}if(['ArrowLeft','ArrowRight'].includes(e.code)){e.preventDefault();if(!e.repeat)dodge(e.code==='ArrowLeft'?-1:1);}});
 function results(){
   game.mode='result';const record=game.score>best;best=Math.max(best,game.score);try{localStorage.setItem(CONFIG.bestStorageKey,String(best));}catch{}
-  for(const [id,value] of [['result-distance',game.score],['result-best',best],['result-base',Math.floor(game.distance)],['result-bonus',game.bonus],['result-count',game.dodged]])$(id).textContent=value.toLocaleString('ja-JP')+(id==='result-count'?' 台':id==='result-distance'?'':' m');
+  for(const [id,value] of [['result-distance',game.score],['result-best',best],['result-base',Math.floor(game.distance)],['result-bonus',game.bonus],['result-count',game.dodged]])$(id).textContent=(id==='result-count'||id==='result-base'?value.toLocaleString('ja-JP'):tokyoDistance(value))+(id==='result-count'?' 台':id==='result-distance'?'':' m');
   $('new-best').hidden=!record;$('result').hidden=false;$('pause').hidden=true;$('hud').hidden=true;$('retry').focus();
 }
 function frame(now){
@@ -50,7 +52,7 @@ function frame(now){
   game.tick(now);
   let urgency=0;
   if(game.mode==='playing') {
-    $('distance').textContent=game.score.toLocaleString('ja-JP');$('count').textContent=`${game.dodged} 台回避`;
+    $('distance').textContent=tokyoDistance(game.score);$('count').textContent=`${game.dodged} 台回避`;
     if(game.car&&!game.car.evaded)urgency=Math.max(0,1-(game.car.deadline-now)/1200);
     $('danger').style.opacity=urgency*.78;
     $('warning').hidden=!(urgency>.25);audio.update(urgency,true);
