@@ -4,16 +4,16 @@ import { Game, Flick, gradeFor } from '../src/engine.js';
 import { CONFIG } from '../src/config.js';
 function spawned(){const g=new Game(CONFIG,()=>0);g.start(0);g.tick(CONFIG.firstSpawnMs);return g;}
 test('grade boundaries use remaining milliseconds, including exact deadline',()=>{
- for(const [ms,name] of [[401,'OK'],[400,'GOOD'],[221,'GOOD'],[220,'GREAT'],[101,'GREAT'],[100,'CRITICAL'],[.001,'CRITICAL'],[0,null],[-1,null]])assert.equal(gradeFor(ms)?.name??null,name);
+ for(const [ms,name] of [[401,'OK'],[400,'GOOD'],[221,'GOOD'],[220,'GREAT'],[101,'GREAT'],[100,'GREAT'],[1.001,'GREAT'],[1,'CRITICAL'],[.001,'CRITICAL'],[0,null],[-1,null]])assert.equal(gradeFor(ms)?.name??null,name);
 });
 test('both directions evade immediately; each vehicle awards exactly once',()=>{
- for(const dir of [-1,1])for(const [ms,name,bonus] of [[500,'OK',0],[300,'GOOD',50],[150,'GREAT',100],[50,'CRITICAL',500]]){
+ for(const dir of [-1,1])for(const [ms,name,bonus] of [[500,'OK',0],[300,'GOOD',50],[150,'GREAT',150],[.5,'CRITICAL',1000]]){
   const g=spawned(),t=g.car.deadline-ms;assert.equal(g.dodge(dir,t).name,name);assert.equal(g.bonus,bonus);assert.equal(g.dodged,1);assert.equal(g.dodge(-dir,t+1),null);assert.equal(g.bonus,bonus);assert.equal(g.dodged,1);assert.ok(g.offset(t+1)*dir>0);
   const deadline=g.car.deadline;g.tick(deadline+CONFIG.passMs);assert.equal(g.car,null);g.tick(deadline+CONFIG.passMs+CONFIG.returnMs);assert.ok(Math.abs(g.offset(g.lastTime))===0);assert.equal(g.mode,'playing');assert.ok(g.nextSpawn>=g.lastTime+CONFIG.spawnGapMinMs);
  }
 });
 test('accepted input survives a late render even when animation is unfinished',()=>{
- const g=spawned(),t=g.car.deadline-1;assert.equal(g.dodge(1,t).name,'CRITICAL');g.tick(t+200);assert.equal(g.mode,'playing');assert.equal(g.bonus,500);
+ const g=spawned(),t=g.car.deadline-1;assert.equal(g.dodge(1,t).name,'CRITICAL');g.tick(t+200);assert.equal(g.mode,'playing');assert.equal(g.bonus,1000);
 });
 test('late input crashes; distance stops at scheduled collision despite dropped frames',()=>{
  const g=spawned(),deadline=g.car.deadline;assert.equal(g.dodge(-1,deadline+500),null);assert.equal(g.mode,'crashed');assert.equal(g.distance,deadline*CONFIG.driveSpeed/1000);g.start(10000);assert.equal(g.score,0);assert.equal(g.mode,'playing');
