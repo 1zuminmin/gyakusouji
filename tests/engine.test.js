@@ -4,7 +4,7 @@ import { Game, Flick, gradeFor } from '../src/engine.js';
 import { CONFIG } from '../src/config.js';
 function spawned(){const g=new Game(CONFIG,()=>0);g.start(0);g.tick(CONFIG.firstSpawnMs);return g;}
 test('grade boundaries use remaining milliseconds, including exact deadline',()=>{
- for(const [ms,name] of [[401,'OK'],[400,'GOOD'],[221,'GOOD'],[220,'GREAT'],[101,'GREAT'],[100,'GREAT'],[50.001,'GREAT'],[50,'CRITICAL'],[1,'CRITICAL'],[.001,'CRITICAL'],[0,null],[-1,null]])assert.equal(gradeFor(ms)?.name??null,name);
+ for(const [ms,name] of [[401,'OK'],[400,'GOOD'],[221,'GOOD'],[220,'GREAT'],[101,'GREAT'],[100,'GREAT'],[50,'GREAT'],[10.001,'GREAT'],[10,'CRITICAL'],[1,'CRITICAL'],[.001,'CRITICAL'],[0,null],[-1,null]])assert.equal(gradeFor(ms)?.name??null,name);
 });
 test('both directions evade immediately; each vehicle awards exactly once',()=>{
  for(const dir of [-1,1])for(const [ms,name,bonus] of [[500,'OK',0],[300,'GOOD',50],[150,'GREAT',150],[.5,'CRITICAL',1000]]){

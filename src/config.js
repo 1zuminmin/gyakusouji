@@ -1,7 +1,7 @@
 // Time: milliseconds; distance: meters. Difficulty never uses bonus distance.
 export const CONFIG = Object.freeze({
   grades: [
-    { maxMs: 50, name: 'CRITICAL', bonus: 1000, color: '#ff83db' },
+    { maxMs: 10, name: 'CRITICAL', bonus: 1000, color: '#ff83db' },
     { maxMs: 220, name: 'GREAT', bonus: 150, color: '#fbd35d' },
     { maxMs: 400, name: 'GOOD', bonus: 50, color: '#dce8ee' },
     { maxMs: Infinity, name: 'OK', bonus: 0, color: '#cb9369' },
