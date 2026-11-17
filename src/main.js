@@ -56,7 +56,7 @@ function frame(now){
     $('warning').hidden=!(urgency>.25);audio.update(urgency,true);
   } else if(game.mode==='crashed') {
     if(!crashShown){crashShown=true;audio.crash();$('warning').hidden=true;$('touch-hint').hidden=true;$('danger').className='crash';$('grade-frame').className='';}
-    const elapsed=now-game.crashAt;$('danger').style.opacity=elapsed<130?1:elapsed<CONFIG.crashCloseupMs?.72:.30;
+    const elapsed=now-game.crashAt;$('danger').style.opacity=elapsed<90?.74:elapsed<CONFIG.crashCloseupMs?.35:.30;
     if(elapsed>=CONFIG.crashCloseupMs+CONFIG.crashExteriorMs)results();
   } else audio.update(0,false);
   if(now>feedbackUntil)$('grade-frame').className='';
