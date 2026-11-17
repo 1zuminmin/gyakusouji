@@ -7,7 +7,7 @@ export class Game {
   constructor(config = CONFIG, random = Math.random) { this.c = config; this.random = random; this.mode = 'intro'; }
   start(now) {
     Object.assign(this, { mode: 'playing', distance: 0, bonus: 0, penalty: 0, dodged: 0, car: null,
-      nextSpawn: now + this.c.firstSpawnMs, lastTime: now, returnStart: null, direction: 0, crashAt: null });
+      nextSpawn: now + this.c.firstSpawnMs, lastTime: now, returnStart: null, direction: 0, crashAt: null, arrivalAt: null, lastDodgeRemainingMs: null });
   }
   get score() { return Math.floor((this.distance || 0) + (this.bonus || 0) - (this.penalty || 0)); }
   tick(now) {
@@ -32,10 +32,18 @@ export class Game {
   }
   dodge(direction, now) {
     if (this.mode !== 'playing' || !this.car || this.car.evaded) return null;
-    const grade = gradeFor(this.car.deadline - now, this.c);
+    this.tick(now);
+    if (this.mode !== 'playing' || !this.car || this.car.evaded) return null;
+    const remainingMs = this.car.deadline - now;
+    const grade = gradeFor(remainingMs, this.c);
     if (!grade) { this.tick(now); return null; }
     this.car.evaded = true; this.car.dodgeAt = now; this.direction = direction < 0 ? -1 : 1;
-    this.bonus += grade.bonus; this.penalty += grade.penalty || 0; this.dodged++; return grade;
+    this.bonus += grade.bonus; this.penalty += grade.penalty || 0; this.dodged++;
+    this.lastDodgeRemainingMs = remainingMs;
+    if (this.score <= -this.c.secretArrivalMeters) {
+      this.mode = 'arrived'; this.arrivalAt = now; this.car = null; this.returnStart = null; this.direction = 0;
+    }
+    return grade;
   }
   offset(now) {
     if (this.car?.evaded) return this.direction * this.c.dodgeOffset * (1 - Math.pow(1 - Math.min(1, Math.max(0, now - this.car.dodgeAt) / this.c.dodgeMs), 3));
