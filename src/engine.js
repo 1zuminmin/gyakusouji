@@ -1,14 +1,15 @@
 import { CONFIG } from './config.js';
 export function gradeFor(remainingMs, config = CONFIG) {
+  if (remainingMs > config.earlyThresholdMs) return config.earlyGrade;
   return remainingMs > 0 ? config.grades.find(g => remainingMs <= g.maxMs) : null;
 }
 export class Game {
   constructor(config = CONFIG, random = Math.random) { this.c = config; this.random = random; this.mode = 'intro'; }
   start(now) {
-    Object.assign(this, { mode: 'playing', distance: 0, bonus: 0, dodged: 0, car: null,
+    Object.assign(this, { mode: 'playing', distance: 0, bonus: 0, penalty: 0, dodged: 0, car: null,
       nextSpawn: now + this.c.firstSpawnMs, lastTime: now, returnStart: null, direction: 0, crashAt: null });
   }
-  get score() { return Math.floor((this.distance || 0) + (this.bonus || 0)); }
+  get score() { return Math.floor((this.distance || 0) + (this.bonus || 0) - (this.penalty || 0)); }
   tick(now) {
     if (this.mode !== 'playing') return;
     const end = this.car && !this.car.evaded ? Math.min(now, this.car.deadline) : now;
@@ -34,7 +35,7 @@ export class Game {
     const grade = gradeFor(this.car.deadline - now, this.c);
     if (!grade) { this.tick(now); return null; }
     this.car.evaded = true; this.car.dodgeAt = now; this.direction = direction < 0 ? -1 : 1;
-    this.bonus += grade.bonus; this.dodged++; return grade;
+    this.bonus += grade.bonus; this.penalty += grade.penalty || 0; this.dodged++; return grade;
   }
   offset(now) {
     if (this.car?.evaded) return this.direction * this.c.dodgeOffset * (1 - Math.pow(1 - Math.min(1, Math.max(0, now - this.car.dodgeAt) / this.c.dodgeMs), 3));

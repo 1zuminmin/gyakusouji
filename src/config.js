@@ -1,11 +1,13 @@
 // Time: milliseconds; distance: meters. Difficulty never uses bonus distance.
 export const CONFIG = Object.freeze({
   grades: [
-    { maxMs: 100, name: 'PERFECT', bonus: 100, color: '#ff83db' },
-    { maxMs: 220, name: 'GREAT', bonus: 50, color: '#fbd35d' },
-    { maxMs: 400, name: 'GOOD', bonus: 25, color: '#dce8ee' },
+    { maxMs: 100, name: 'CRITICAL', bonus: 500, color: '#ff83db' },
+    { maxMs: 220, name: 'GREAT', bonus: 100, color: '#fbd35d' },
+    { maxMs: 400, name: 'GOOD', bonus: 50, color: '#dce8ee' },
     { maxMs: Infinity, name: 'OK', bonus: 0, color: '#cb9369' },
   ],
+  earlyThresholdMs: 800,
+  earlyGrade: { name: 'EARLY', bonus: 0, penalty: 200, color: '#ff985a' },
   driveSpeed: 32, approachSpeed: 68, maxApproachSpeed: 142,
   speedIncreasePerMeter: .025, spawnDistance: 135, minReactionMs: 950,
   firstSpawnMs: 1100, spawnGapMinMs: 650, spawnGapMaxMs: 1250,

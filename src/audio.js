@@ -14,6 +14,7 @@ export class Audio {
   toggle(){this.enabled=!this.enabled;if(this.master)this.master.gain.setTargetAtTime(this.enabled?.24:0,this.ctx.currentTime,.02);return this.enabled;}
   update(urgency,playing){if(!this.ctx)return;const t=this.ctx.currentTime;this.filter.frequency.setTargetAtTime(400+urgency*2800,t,.04);this.hiss.gain.setTargetAtTime(playing?urgency*.65:0,t,.025);this.engineGain.gain.setTargetAtTime(playing?.10:0,t,.05);}
   success(index){if(!this.ctx)return;this.hiss.gain.cancelScheduledValues(this.ctx.currentTime);this.hiss.gain.setValueAtTime(0,this.ctx.currentTime);this.tone(380+index*150,.14,'sine',.32);setTimeout(()=>this.tone(620+index*180,.18,'sine',.19),70);}
+  penalty(){if(!this.ctx)return;this.hiss.gain.cancelScheduledValues(this.ctx.currentTime);this.hiss.gain.setValueAtTime(0,this.ctx.currentTime);this.tone(150,.25,'triangle',.45);}
   tone(f,d,type='sine',volume=.4){const t=this.ctx.currentTime;const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(this.master);o.start(t);o.stop(t+d);}
   crash(){if(!this.ctx)return;this.update(0,false);this.tone(100,.65,'sawtooth',.9);this.tone(46,1,'triangle',.9);}
 }

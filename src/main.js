@@ -4,8 +4,8 @@ import { Game, Flick } from './engine.js';
 import { World } from './world.js';
 import { Audio } from './audio.js';
 const $=id=>document.getElementById(id);
-// Keep magnitudes positive internally for difficulty and existing saved records.
-const tokyoDistance=value=>`${value > 0 ? '−' : ''}${Math.floor(value).toLocaleString('ja-JP')}`;
+// Negative score magnitudes (penalties) appear as positive distance to Tokyo.
+const tokyoDistance=value=>(-Math.floor(value) || 0).toLocaleString('ja-JP', { signDisplay: 'exceptZero' }).replace('-', '−');
 const game=new Game(),flick=new Flick(),audio=new Audio();
 let world,best=0,pausedAt=null,crashShown=false,feedbackUntil=0;
 try{best=Number(localStorage.getItem(CONFIG.bestStorageKey))||0;}catch{}
@@ -29,10 +29,10 @@ function dodge(direction){
   const grade=game.dodge(direction,performance.now());if(!grade)return;
   const now=performance.now();feedbackUntil=now+850;
   $('touch-hint').hidden=true;$('danger').style.opacity=0;$('warning').hidden=true;
-  const f=$('feedback');f.querySelector('strong').textContent=grade.name;f.querySelector('span').textContent=`${tokyoDistance(grade.bonus)} m`;f.style.color=grade.color;
+  const f=$('feedback');f.querySelector('strong').textContent=grade.name;f.querySelector('span').textContent=grade.penalty ? `早すぎ！ +${grade.penalty} m` : `${tokyoDistance(grade.bonus)} m`;f.style.color=grade.color;
   f.className='';void f.offsetWidth;f.className='show';
-  const frame=$('grade-frame');frame.className='';void frame.offsetWidth;frame.style.setProperty('--grade',grade.color);frame.className=`flash${grade.name==='PERFECT'?' rainbow':''}`;
-  audio.success(3-CONFIG.grades.indexOf(grade));
+  const frame=$('grade-frame');frame.className='';void frame.offsetWidth;frame.style.setProperty('--grade',grade.color);frame.className=`flash${grade.name==='CRITICAL'?' rainbow':''}`;
+  if (grade.penalty) audio.penalty(); else audio.success(3-CONFIG.grades.indexOf(grade));
   // Apply the first visible displacement within the input event, before pointerup.
   world?.render(game,now+1);
 }
@@ -43,7 +43,7 @@ app.addEventListener('pointerup',e=>flick.clear(e.pointerId));app.addEventListen
 window.addEventListener('keydown',e=>{if(e.code==='Escape'){if(pausedAt!==null)resume();else pause();}if(['ArrowLeft','ArrowRight'].includes(e.code)){e.preventDefault();if(!e.repeat)dodge(e.code==='ArrowLeft'?-1:1);}});
 function results(){
   game.mode='result';const record=game.score>best;best=Math.max(best,game.score);try{localStorage.setItem(CONFIG.bestStorageKey,String(best));}catch{}
-  for(const [id,value] of [['result-distance',game.score],['result-best',best],['result-base',Math.floor(game.distance)],['result-bonus',game.bonus],['result-count',game.dodged]])$(id).textContent=(id==='result-count'||id==='result-base'?value.toLocaleString('ja-JP'):tokyoDistance(value))+(id==='result-count'?' 台':id==='result-distance'?'':' m');
+  for(const [id,value] of [['result-distance',game.score],['result-best',best],['result-base',Math.floor(game.distance)],['result-bonus',game.bonus],['result-penalty',game.penalty],['result-count',game.dodged]])$(id).textContent=(id==='result-penalty'?`+${value.toLocaleString('ja-JP')}`:id==='result-count'||id==='result-base'?value.toLocaleString('ja-JP'):tokyoDistance(value))+(id==='result-count'?' 台':id==='result-distance'?'':' m');
   $('new-best').hidden=!record;$('result').hidden=false;$('pause').hidden=true;$('hud').hidden=true;$('retry').focus();
 }
 function frame(now){
